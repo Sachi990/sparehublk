@@ -1,0 +1,18 @@
+docker run -d \
+  --name my_postgres \
+  -e POSTGRES_USER=sachindu \
+  -e POSTGRES_PASSWORD=sachibc99 \
+  -e POSTGRES_DB=sparehub \
+  -p 5432:5432 \
+  -v postgres_data:/var/lib/postgresql/data \
+  postgres:latest
+
+
+
+docker exec -it my_postgres psql -U sachindu -d sparehub
+GRANT ALL PRIVILEGES ON DATABASE sparehub TO sachindu;
+
+INSERT INTO admins (name, email, password)                           
+VALUES ('Admin', 'admin@example.com', 'admin123');
+
+
