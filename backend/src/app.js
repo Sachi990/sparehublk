@@ -1,32 +1,62 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
 
-app.use(cors());
+// Security HTTP headers
+app.use(helmet());
+
+// Dev logger
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
+
+// Rate limiter
+app.use(rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 100,
+}));
+
+// Body parser
 app.use(express.json());
 
-// Import routes
-const authRoutes = require('./routes/auth.routes');
-const adminRoutes = require('./routes/admin.routes');
-const productRoutes = require('./routes/product.routes');
-const orderRoutes = require('./routes/order.routes');
-const reportsRoutes = require('./routes/reports.routes');
-const wishlistRoutes = require('./routes/wishlist.routes');
-const cartRoutes = require('./routes/cart.routes');
-const reviewsRoutes = require('./routes/reviews.routes');
-const paymentRoutes = require('./routes/payment.routes');
-const settingsRoutes = require('./routes/settings.routes'); 
+// Data sanitization against NoSQL injection and XSS
+app.use(mongoSanitize());
+app.use(xss());
 
-// Use routes
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/reports', reportsRoutes);
-app.use('/api/wishlist', wishlistRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/reviews', reviewsRoutes);
-app.use('/api/payment', paymentRoutes);
-app.use('/api/settings', settingsRoutes);
+// CORS
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' ? 'https://yourdomain.com' : 'http://localhost:5173',
+  credentials: true
+}));
+
+// Routes
+app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/admin', require('./routes/admin.routes'));
+app.use('/api/products', require('./routes/product.routes'));
+app.use('/api/orders', require('./routes/order.routes'));
+app.use('/api/reports', require('./routes/reports.routes'));
+app.use('/api/wishlist', require('./routes/wishlist.routes'));
+app.use('/api/cart', require('./routes/cart.routes'));
+app.use('/api/reviews', require('./routes/reviews.routes'));
+app.use('/api/payment', require('./routes/payment.routes'));
+app.use('/api/settings', require('./routes/settings.routes'));
+app.use('/api/categories', require('./routes/category.routes'));
+app.use('/api/search', require('./routes/search.routes'));
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not Found' });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err.stack);
+  res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
+});
 
 module.exports = app;

@@ -1,85 +1,78 @@
 // src/components/ProductFilters.jsx
 import React, { useState, useEffect } from 'react';
+import Select from 'react-select';
 
-// Define fixed categories with internal values and display names
-const categoryOptions = [
-  { value: '', label: 'Select Category' },
-  { value: 'genuine', label: 'Genuine Original Parts' },
-  { value: 'branded', label: 'Branded Parts' },
-  { value: 'non-branded', label: 'Non-Branded Parts' },
-];
-
-function ProductFilters({ products, onFilterChange }) {
-  // Compute distinct brands from the products array
+function ProductFilters({ products = [], onFilterChange = () => {} }) {
+  // Remove category options from here as it will be handled by the sidebar.
+  
+  // Get distinct brands and product types and models from products.
   const distinctBrands = Array.from(new Set(products.map(p => p.brand))).sort();
+  const brandOptions = distinctBrands.map(brand => ({ value: brand, label: brand }));
+  
+  const distinctProductTypes = Array.from(new Set(products.map(p => p.productType))).sort();
+  const productTypeOptions = distinctProductTypes.map(pt => ({ value: pt, label: pt }));
 
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedBrand, setSelectedBrand] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState(null);
+  const [selectedModel, setSelectedModel] = useState(null);
+  const [selectedProductType, setSelectedProductType] = useState(null);
   const [modelOptions, setModelOptions] = useState([]);
 
-  // When selectedBrand changes, update model options based on the products
+  // Update models based on selected brand
   useEffect(() => {
     if (selectedBrand) {
       const models = Array.from(
-        new Set(products.filter(p => p.brand === selectedBrand).map(p => p.model))
+        new Set(
+          products
+            .filter(p => p.brand === selectedBrand.value)
+            .map(p => p.model)
+        )
       ).sort();
-      setModelOptions(models);
+      setModelOptions(models.map(model => ({ value: model, label: model })));
     } else {
       setModelOptions([]);
-      setSelectedModel("");
+      setSelectedModel(null);
     }
   }, [selectedBrand, products]);
 
-  // Notify parent component whenever filters change
+  // Notify parent of changes
   useEffect(() => {
     onFilterChange({
-      category: selectedCategory,
-      brand: selectedBrand,
-      model: selectedModel,
+      brand: selectedBrand?.value || '',
+      model: selectedModel?.value || '',
+      productType: selectedProductType?.value || '',
     });
-  }, [selectedCategory, selectedBrand, selectedModel, onFilterChange]);
+  }, [selectedBrand, selectedModel, selectedProductType]);
 
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-4">
-      <select
-        value={selectedCategory}
-        onChange={(e) => setSelectedCategory(e.target.value)}
-        className="border p-2 rounded"
-      >
-        {categoryOptions.map((cat, idx) => (
-          <option key={idx} value={cat.value}>
-            {cat.label}
-          </option>
-        ))}
-      </select>
-
-      <select
-        value={selectedBrand}
-        onChange={(e) => setSelectedBrand(e.target.value)}
-        className="border p-2 rounded"
-      >
-        <option value="">Select Brand</option>
-        {distinctBrands.map((brand, idx) => (
-          <option key={idx} value={brand}>
-            {brand}
-          </option>
-        ))}
-      </select>
-
-      <select
-        value={selectedModel}
-        onChange={(e) => setSelectedModel(e.target.value)}
-        className="border p-2 rounded"
-        disabled={!selectedBrand}
-      >
-        <option value="">Select Model</option>
-        {modelOptions.map((model, idx) => (
-          <option key={idx} value={model}>
-            {model}
-          </option>
-        ))}
-      </select>
+      <div className="w-full md:w-1/3">
+        <Select
+          value={selectedBrand}
+          onChange={setSelectedBrand}
+          options={brandOptions}
+          placeholder="Select Brand"
+          isClearable
+        />
+      </div>
+      <div className="w-full md:w-1/3">
+        <Select
+          value={selectedModel}
+          onChange={setSelectedModel}
+          options={modelOptions}
+          placeholder="Select Model"
+          isClearable
+          isDisabled={!selectedBrand}
+        />
+      </div>
+      <div className="w-full md:w-1/3">
+        <Select
+          value={selectedProductType}
+          onChange={setSelectedProductType}
+          options={productTypeOptions}
+          placeholder="Select Product Type"
+          isClearable
+        />
+      </div>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 function AdminDashboard() {
-  const [activeSection, setActiveSection] = useState('dashboard'); // 'dashboard', 'products', 'orders', 'reports', 'notifications'
+  const [activeSection, setActiveSection] = useState('dashboard'); // Options: 'dashboard', 'products', 'orders', 'reports', 'notifications'
   const [salesData, setSalesData] = useState([]);
   const [profitData, setProfitData] = useState([]);
   const [inventory, setInventory] = useState({ inventory: [], lowStock: [] });
@@ -41,7 +41,7 @@ function AdminDashboard() {
     }
   }, [activeSection]);
 
-  // Render Sales Chart when in Dashboard section and salesData is available
+  // Render Sales Chart for dashboard metrics using Chart.js
   useEffect(() => {
     if (!loading && activeSection === 'dashboard' && salesData.length > 0) {
       const canvas = document.getElementById('salesChart');
@@ -69,7 +69,6 @@ function AdminDashboard() {
             maintainAspectRatio: false
           }
         });
-        console.log('Sales chart rendered successfully');
       } catch (error) {
         console.error('Error rendering sales chart:', error);
       }
@@ -81,7 +80,7 @@ function AdminDashboard() {
   const totalRevenue = salesData.reduce((sum, report) => sum + report.total_revenue, 0);
   const totalProfit = profitData.reduce((sum, report) => sum + report.total_profit, 0);
 
-  // Render content for each section
+  // Section Renderers
   const renderDashboardSection = () => (
     <>
       <div className="mb-8">
@@ -171,31 +170,65 @@ function AdminDashboard() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4">
-      <div className="flex flex-wrap gap-4 mb-8">
-        <button onClick={() => setActiveSection('dashboard')} className="bg-accent text-black py-2 px-4 rounded hover:bg-yellow-600 transition">
-          Dashboard
-        </button>
-        <button onClick={() => setActiveSection('products')} className="bg-accent text-black py-2 px-4 rounded hover:bg-yellow-600 transition">
-          Products
-        </button>
-        <button onClick={() => setActiveSection('orders')} className="bg-accent text-black py-2 px-4 rounded hover:bg-yellow-600 transition">
-          Orders
-        </button>
-        <button onClick={() => setActiveSection('reports')} className="bg-accent text-black py-2 px-4 rounded hover:bg-yellow-600 transition">
-          Reports
-        </button>
-        <button onClick={() => setActiveSection('notifications')} className="bg-accent text-black py-2 px-4 rounded hover:bg-yellow-600 transition relative">
-          Notifications
-          {notifications.length > 0 && (
-            <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {notifications.length}
-            </span>
-          )}
-        </button>
-      </div>
-      {loading ? <p>Loading dashboard data...</p> : renderActiveSection()}
-    </motion.div>
+    <div className="min-h-screen flex flex-col bg-gray-100">
+      {/* Admin Header */}
+      <header className="bg-gray-800 text-white p-4 shadow-md">
+        <div className="container mx-auto flex items-center justify-between">
+          <h1 className="text-2xl font-bold">
+            <Link to="/admin">Admin Dashboard</Link>
+          </h1>
+          <nav>
+            <ul className="flex space-x-6">
+              <li>
+                <button onClick={() => setActiveSection('dashboard')} className="hover:text-accent transition">
+                  Dashboard
+                </button>
+              </li>
+              <li>
+                <button onClick={() => setActiveSection('products')} className="hover:text-accent transition">
+                  Products
+                </button>
+              </li>
+              <li>
+                <button onClick={() => setActiveSection('orders')} className="hover:text-accent transition">
+                  Orders
+                </button>
+              </li>
+              <li>
+                <button onClick={() => setActiveSection('reports')} className="hover:text-accent transition">
+                  Reports
+                </button>
+              </li>
+              <li className="relative">
+                <button onClick={() => setActiveSection('notifications')} className="hover:text-accent transition">
+                  Notifications
+                  {notifications.length > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </header>
+
+      {/* Dashboard Content */}
+      <motion.main className="flex-grow container mx-auto p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+        {loading ? (
+          <p className="text-center py-4">Loading dashboard data...</p>
+        ) : (
+          renderActiveSection()
+        )}
+      </motion.main>
+
+      {/* Admin Footer */}
+      <footer className="bg-gray-800 text-white p-4 text-center border-t border-gray-700">
+        <p>&copy; {new Date().getFullYear()} SpareHub.LK Admin. All rights reserved.</p>
+        <p>Contact support: admin@sparehub.lk</p>
+      </footer>
+    </div>
   );
 }
 
